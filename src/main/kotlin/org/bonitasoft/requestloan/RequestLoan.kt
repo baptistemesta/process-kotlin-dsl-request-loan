@@ -1,5 +1,7 @@
 package org.bonitasoft.requestloan
 
+import org.bonitasoft.engine.dsl.process.ExpressionDSLBuilder.ExpressionDSLBuilderObject.contractValue
+import org.bonitasoft.engine.dsl.process.ExpressionDSLBuilder.ExpressionDSLBuilderObject.dataRef
 import org.bonitasoft.engine.dsl.process.Process
 import org.bonitasoft.engine.dsl.process.ProcessConfiguration
 import org.bonitasoft.engine.dsl.process.configuration
@@ -13,6 +15,9 @@ class RequestLoan : BonitaProcessBuilder {
     override fun build(): Process = process("Request Loan", "1.0") {
         val requester = initiator("requester")
         val validator = actor("validator")
+        data {
+            boolean named "accepted"
+        }
         contract {
             integer named "amount"
             text named "type"
@@ -23,6 +28,9 @@ class RequestLoan : BonitaProcessBuilder {
                 boolean named "accept"
                 text named "reason"
             }
+            operations {
+                update("accepted").with(contractValue("accept"))
+            }
         }
         val gateway = exclusiveGateway("accepted")
         val signContract = userTask("Sign contract") {
@@ -31,8 +39,8 @@ class RequestLoan : BonitaProcessBuilder {
         val notifyReject = automaticTask("Notify reject")
         transitions {
             reviewRequest to gateway
-            gateway to signContract
-            gateway to notifyReject
+            gateway to signContract withCondition dataRef("accepted")
+            default from gateway to notifyReject
         }
     }
 
