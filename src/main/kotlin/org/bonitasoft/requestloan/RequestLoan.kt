@@ -45,5 +45,9 @@ class RequestLoan : BonitaProcessBuilder {
     }
 
     override fun configuration(): ProcessConfiguration = configuration {
+        actorMapping {
+            "requester" toUser "john"
+            "validator" toUser "jack"
+        }
     }
 }
